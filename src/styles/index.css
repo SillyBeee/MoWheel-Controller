@@ -1,0 +1,145 @@
+/* 全局样式 */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  height: 100%;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* 侧边栏样式 */
+.sidebar-container {
+  transition: width 0.28s;
+  width: 210px;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1001;
+  overflow: hidden;
+}
+
+.sidebar-logo {
+  position: relative;
+  height: 50px;
+  line-height: 50px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.sidebar-logo img {
+  display: inline-block;
+  height: 32px;
+  width: 32px;
+  vertical-align: middle;
+  margin-right: 5px;
+}
+
+.sidebar-logo .title {
+  display: inline-block;
+  margin: 0;
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+/* 主要布局样式 */
+.main-container {
+  min-height: 100%;
+  transition: margin-left 0.28s;
+  margin-left: 210px;
+  position: relative;
+}
+
+.header-container {
+  height: 50px;
+  background-color: #fff;
+  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 15px;
+}
+
+.content-container {
+  padding: 15px;
+  min-height: calc(100vh - 50px);
+}
+
+/* 卡片组件样式 */
+.card-panel {
+  height: 108px;
+  cursor: pointer;
+  font-size: 12px;
+  position: relative;
+  overflow: hidden;
+  color: #666;
+  background: #fff;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.card-panel:hover {
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.2);
+  transform: translateY(-5px);
+}
+
+.card-panel-icon-wrapper {
+  float: left;
+  margin: 14px 0 0 14px;
+  padding: 16px;
+  transition: all 0.3s;
+  border-radius: 6px;
+}
+
+.card-panel-icon {
+  float: left;
+  font-size: 48px;
+}
+
+.card-panel-description {
+  float: right;
+  font-weight: bold;
+  margin: 26px 15px 0 0;
+  text-align: right;
+}
+
+.card-panel-description .card-panel-text {
+  line-height: 18px;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+.card-panel-description .card-panel-num {
+  font-size: 20px;
+}
