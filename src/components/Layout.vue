@@ -82,16 +82,15 @@
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
-          </el-space>
-        </div>
-      </div>
-      
-      <div class="content-container">
+          </el-space>        </div>      </div>      <div class="content-container">
         <!-- 路由视图 -->
         <router-view v-slot="{ Component }">
-          <transition name="fade-transform" mode="out-in">
-            <component :is="Component" />
-          </transition>
+          <keep-alive>
+            <component 
+              :is="Component" 
+              :key="$route.fullPath"
+            />
+          </keep-alive>
         </router-view>
       </div>
     </div>
