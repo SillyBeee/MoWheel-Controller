@@ -8,6 +8,9 @@ const isLoading = ref(true);
 
 // 页面加载时触发
 onMounted(() => {
+  // 初始化主题
+  appStore.initTheme();
+  
   // 初始化一些演示数据
   setTimeout(() => {
     // 模拟数据加载完成

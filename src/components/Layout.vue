@@ -44,21 +44,34 @@
         </div>
         
         <div class="right-area">
-          <el-space>
-            <el-select 
-              v-model="selectedPort" 
-              placeholder="选择串口" 
-              size="small" 
-              @change="handlePortChange"
-              :disabled="connectionStatus"
-            >
-              <el-option
-                v-for="port in serialPorts"
-                :key="port"
-                :label="port"
-                :value="port"
-              ></el-option>
-            </el-select>
+          <el-space>            <div class="port-selector">
+              <el-select 
+                v-model="selectedPort" 
+                placeholder="选择串口" 
+                size="small" 
+                @change="handlePortChange"
+                :disabled="connectionStatus"
+                :loading="portsLoading"
+              >
+                <el-option
+                  v-for="port in serialPorts"
+                  :key="port"
+                  :label="port"
+                  :value="port"
+                ></el-option>
+              </el-select>
+              <el-tooltip content="刷新串口列表" placement="bottom">
+                <el-button 
+                  type="primary" 
+                  circle 
+                  icon="Refresh" 
+                  size="small" 
+                  :disabled="connectionStatus" 
+                  @click="refreshPorts"
+                  :loading="portsLoading"
+                ></el-button>
+              </el-tooltip>
+            </div>
             
             <el-button 
               :type="connectionStatus ? 'danger' : 'primary'" 
@@ -100,6 +113,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { ElMessage } from 'element-plus';
 import { 
   HomeFilled, 
   Monitor, 
@@ -108,7 +122,8 @@ import {
   Tools, 
   Fold, 
   Expand, 
-  QuestionFilled 
+  QuestionFilled,
+  Refresh 
 } from '@element-plus/icons-vue';
 import { useAppStore } from '../store';
 
@@ -124,6 +139,10 @@ const selectedPort = computed({
 });
 const connectionStatus = computed(() => appStore.connectionStatus);
 const serialPorts = computed(() => appStore.serialPorts);
+const connectionError = computed(() => appStore.connectionError);
+
+// 串口加载状态
+const portsLoading = ref(false);
 
 // 导航菜单
 const routes = router.getRoutes().filter(route => route.meta && route.meta.title && route.meta.icon);
@@ -139,32 +158,63 @@ const toggleSidebar = () => {
   appStore.toggleSidebar();
 };
 
+// 刷新串口列表
+const refreshPorts = async () => {
+  portsLoading.value = true;
+  try {
+    await appStore.refreshSerialPorts();
+    if (appStore.serialPorts.length === 0) {
+      ElMessage.warning('未检测到可用串口');
+    } else {
+      ElMessage.success(`检测到 ${appStore.serialPorts.length} 个串口`);
+    }
+  } catch (error) {
+    ElMessage.error('刷新串口列表失败: ' + error);
+  } finally {
+    portsLoading.value = false;
+  }
+};
+
 // 处理串口选择
 const handlePortChange = (port) => {
   appStore.setSelectedPort(port);
 };
 
 // 切换连接状态
-const toggleConnection = () => {
+const toggleConnection = async () => {
   if (connectionStatus.value) {
     // 断开连接
-    appStore.setConnectionStatus(false);
-    // 这里应该调用 Tauri API 来断开串口连接
+    const result = await appStore.disconnectPort();
+    if (result) {
+      ElMessage.info('已断开串口连接');
+    } else if (appStore.connectionError) {
+      ElMessage.error(appStore.connectionError);
+    }
   } else {
     // 建立连接
     if (selectedPort.value) {
-      appStore.setConnectionStatus(true);
-      // 这里应该调用 Tauri API 来建立串口连接
+      const result = await appStore.connectToPort();
+      if (result) {
+        ElMessage.success(`已连接到串口 ${selectedPort.value}`);
+      } else if (connectionError.value) {
+        ElMessage.error(connectionError.value);
+      }
     } else {
       ElMessage.warning('请先选择串口');
     }
   }
 };
 
-onMounted(() => {
-  // 模拟获取串口列表
-  // 实际中应该调用 Tauri API 获取可用串口
-  appStore.setSerialPorts(['COM1', 'COM2', 'COM3', 'COM4']);
+onMounted(async () => {
+  // 从系统中获取可用串口
+  portsLoading.value = true;
+  try {
+    await refreshPorts();
+  } catch (error) {
+    console.error('初始化获取串口失败:', error);
+  } finally {
+    portsLoading.value = false;
+  }
   
   // 添加事件监听器以确保侧边栏响应性
   window.addEventListener('resize', handleResize);
@@ -200,7 +250,7 @@ const handleResize = () => {
   left: 0;
   z-index: 1001;
   overflow: hidden;
-  background-color: #304156;
+  background-color: var(--sidebar-bg-color);
 }
 
 .sidebar-container.is-collapse {
@@ -212,7 +262,7 @@ const handleResize = () => {
   line-height: 50px;
   text-align: center;
   overflow: hidden;
-  background-color: #2b3649;
+  background-color: var(--sidebar-bg-color);
   padding: 0 10px;
 }
 
@@ -226,7 +276,7 @@ const handleResize = () => {
 .sidebar-logo .title {
   display: inline-block;
   margin-left: 10px;
-  color: #fff;
+  color: var(--sidebar-text-color);
   font-weight: 600;
   line-height: 50px;
   font-size: 14px;
@@ -246,8 +296,8 @@ const handleResize = () => {
 
 .header-container {
   height: 50px;
-  background-color: #fff;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  background-color: var(--header-bg-color);
+  box-shadow: var(--box-shadow-light);
   position: relative;
   display: flex;
   align-items: center;
@@ -260,6 +310,12 @@ const handleResize = () => {
   align-items: center;
 }
 
+.port-selector {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .breadcrumb {
   margin-left: 15px;
   font-weight: bold;
@@ -268,7 +324,7 @@ const handleResize = () => {
 .content-container {
   padding: 15px;
   min-height: calc(100vh - 50px);
-  background-color: #f0f2f5;
+  background-color: var(--bg-color);
 }
 
 /* Transition动画 */

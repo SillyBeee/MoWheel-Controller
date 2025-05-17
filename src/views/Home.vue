@@ -1,11 +1,10 @@
 <template>
   <div class="home-container">
     <el-row :gutter="20">
-      <!-- 连接状态卡片 -->
-      <el-col :xs="24" :sm="12" :md="6">
+      <!-- 连接状态卡片 -->      <el-col :xs="24" :sm="12" :md="6">
         <div class="card-panel">
-          <div class="card-panel-icon-wrapper" style="background: #ecf8ff;">
-            <el-icon style="color: #409EFF" class="card-panel-icon">
+          <div class="card-panel-icon-wrapper blue-bg">
+            <el-icon style="color: var(--el-color-primary)" class="card-panel-icon">
               <Connection />
             </el-icon>
           </div>
@@ -30,29 +29,37 @@
                 {{ connectionStatus ? '断开' : '连接' }}
               </el-button>
             </div>
-          </template>
-          <el-select 
-            v-model="selectedPort" 
-            placeholder="选择串口" 
-            size="large" 
-            :disabled="connectionStatus"
-            style="width: 100%;"
-          >
-            <el-option
-              v-for="port in serialPorts"
-              :key="port"
-              :label="port"
-              :value="port"
-            ></el-option>
-          </el-select>
+          </template>          <div class="port-control">
+            <el-select 
+              v-model="selectedPort" 
+              placeholder="选择串口" 
+              size="large" 
+              :disabled="connectionStatus"
+              style="width: 100%;"
+              :loading="portsLoading"
+            >
+              <el-option
+                v-for="port in serialPorts"
+                :key="port"
+                :label="port"
+                :value="port"
+              ></el-option>
+            </el-select>
+            <el-button 
+              icon="Refresh"
+              :disabled="connectionStatus"
+              @click="refreshPortList"
+              :loading="portsLoading"
+              circle
+            ></el-button>
+          </div>
         </el-card>
       </el-col>
       
-      <!-- 电机数量指示 -->
-      <el-col :xs="24" :sm="12" :md="6">
+      <!-- 电机数量指示 -->      <el-col :xs="24" :sm="12" :md="6">
         <div class="card-panel">
-          <div class="card-panel-icon-wrapper" style="background: #f0f9eb;">
-            <el-icon style="color: #67C23A" class="card-panel-icon">
+          <div class="card-panel-icon-wrapper green-bg">
+            <el-icon style="color: var(--el-color-success)" class="card-panel-icon">
               <DCaret />
             </el-icon>
           </div>
@@ -63,11 +70,10 @@
         </div>
       </el-col>
       
-      <!-- 运行状态指示 -->
-      <el-col :xs="24" :sm="12" :md="6">
+      <!-- 运行状态指示 -->      <el-col :xs="24" :sm="12" :md="6">
         <div class="card-panel">
-          <div class="card-panel-icon-wrapper" style="background: #fdf6ec;">
-            <el-icon style="color: #E6A23C" class="card-panel-icon">
+          <div class="card-panel-icon-wrapper warning-bg">
+            <el-icon style="color: var(--el-color-warning)" class="card-panel-icon">
               <Warning />
             </el-icon>
           </div>
@@ -77,10 +83,8 @@
           </div>
         </div>
       </el-col>
-    </el-row>
-
-    <!-- 电机控制部分 -->
-    <el-card shadow="hover" header="电机控制" style="margin-top: 20px;">
+    </el-row>    <!-- 电机控制部分 -->
+    <el-card shadow="hover" header="电机控制" style="margin-top: 20px;" class="themed-card">
       <el-row :gutter="20">
         <!-- 电机选择 -->
         <el-col :span="24">
@@ -215,11 +219,10 @@
         </el-col>
       </el-row>
     </el-card>
-    
-    <!-- 状态参数展示 -->
+      <!-- 状态参数展示 -->
     <el-row :gutter="20" style="margin-top: 20px;">
       <el-col :span="12">
-        <el-card shadow="hover" :header="`${currentMotor.name} 状态信息`">
+        <el-card shadow="hover" :header="`${currentMotor.name} 状态信息`" class="themed-card">
           <el-row :gutter="15">
             <el-col :span="12">
               <el-statistic title="当前速度" :value="currentMotor.speed">
@@ -276,20 +279,18 @@
           </el-row>
         </el-card>
       </el-col>
-      
-      <!-- 电机电气参数图表 -->
+        <!-- 电机电气参数图表 -->
       <el-col :span="12">
-        <el-card shadow="hover" header="电气参数">
+        <el-card shadow="hover" header="电气参数" class="themed-card">
           <div ref="voltageChartRef" style="height: 300px;"></div>
         </el-card>
       </el-col>
     </el-row>
-    
-    <!-- 系统日志 -->
+      <!-- 系统日志 -->
     <el-row :gutter="20" style="margin-top: 20px;">
       <el-col :span="24">
-        <el-card shadow="hover" header="系统日志">
-          <el-table :data="logData" stripe style="width: 100%">
+        <el-card shadow="hover" header="系统日志" class="themed-card">
+          <el-table :data="logData" stripe style="width: 100%" class="themed-table">
             <el-table-column prop="time" label="时间" width="180" />
             <el-table-column prop="level" label="级别" width="100">
               <template #default="scope">
@@ -326,6 +327,8 @@ const appStore = useAppStore();
 const voltageChartRef = ref(null);
 let voltageChart = null;
 let chartTimer = null;
+let themeObserver = null;
+const portsLoading = ref(false);
 
 // 从store获取状态
 const motors = computed(() => appStore.motors);
@@ -351,9 +354,7 @@ const runningMotorsCount = computed(() => {
 
 // 系统日志数据
 const logData = ref([
-  { time: '2025-05-16 01:15:23', level: 'info', message: '系统启动成功' },
-  { time: '2025-05-16 01:15:25', level: 'info', message: '扫描可用串口：COM1, COM2, COM3, COM4' },
-  { time: '2025-05-16 01:15:30', level: 'warning', message: '未检测到连接的设备' }
+  { time: '2025-05-18 00:00:00', level: 'info', message: '系统启动成功' }
 ]);
 
 // 获取日志级别对应的标签类型
@@ -367,19 +368,48 @@ const getTagType = (level) => {
   }
 };
 
+// 刷新串口列表
+const refreshPortList = async () => {
+  portsLoading.value = true;
+  try {
+    await appStore.refreshSerialPorts();
+    if (appStore.serialPorts.length === 0) {
+      addLog('warning', '未检测到可用串口');
+      ElMessage.warning('未检测到可用串口');
+    } else {
+      addLog('info', `检测到 ${appStore.serialPorts.length} 个串口：${appStore.serialPorts.join(', ')}`);
+      ElMessage.success(`检测到 ${appStore.serialPorts.length} 个串口`);
+    }
+  } catch (error) {
+    const errorMsg = error.toString();
+    addLog('error', '刷新串口列表失败: ' + errorMsg);
+    ElMessage.error('刷新串口列表失败: ' + errorMsg);
+  } finally {
+    portsLoading.value = false;
+  }
+};
+
 // 切换连接状态
-const toggleConnection = () => {
+const toggleConnection = async () => {
   if (connectionStatus.value) {
     // 断开连接
-    appStore.setConnectionStatus(false);
-    addLog('info', '已断开串口连接');
-    // 这里应该调用 Tauri API 来断开串口连接
+    const result = await appStore.disconnectPort();
+    if (result) {
+      addLog('info', '已断开串口连接');
+      ElMessage.info('已断开串口连接');
+    }
   } else {
     // 建立连接
     if (selectedPort.value) {
-      appStore.setConnectionStatus(true);
-      addLog('success', `已连接到串口 ${selectedPort.value}`);
-      // 这里应该调用 Tauri API 来建立串口连接
+      const result = await appStore.connectToPort();
+      if (result) {
+        addLog('success', `已连接到串口 ${selectedPort.value}`);
+        ElMessage.success(`已连接到串口 ${selectedPort.value}`);
+      } else {
+        const errorMsg = appStore.connectionError || '连接失败，未知错误';
+        addLog('error', errorMsg);
+        ElMessage.error(errorMsg);
+      }
     } else {
       ElMessage.warning('请先选择串口');
       addLog('warning', '未选择串口，无法建立连接');
@@ -487,7 +517,9 @@ const emergencyStop = () => {
 // 初始化电压电流图表
 const initVoltageChart = () => {
   if (voltageChartRef.value) {
-    voltageChart = echarts.init(voltageChartRef.value);
+    // 判断当前主题模式
+    const isDarkMode = document.documentElement.classList.contains('dark-mode');
+    voltageChart = echarts.init(voltageChartRef.value, isDarkMode ? 'dark' : null);
     
     const option = {
       tooltip: {
@@ -500,7 +532,10 @@ const initVoltageChart = () => {
         }
       },
       legend: {
-        data: ['电压', '电流']
+        data: ['电压', '电流'],
+        textStyle: {
+          color: isDarkMode ? '#ddd' : '#333'
+        }
       },
       grid: {
         left: '3%',
@@ -603,12 +638,35 @@ const updateChartData = () => {
   });
 };
 
-onMounted(() => {
+onMounted(async () => {
   initVoltageChart();
   window.addEventListener('resize', handleResize);
-  
-  // 模拟获取串口列表
-  appStore.setSerialPorts(['COM1', 'COM2', 'COM3', 'COM4']);
+    // 监听主题变化
+  themeObserver = new MutationObserver(() => {
+    // 当主题变化时重新初始化图表
+    if (voltageChart) {
+      voltageChart.dispose();
+      initVoltageChart();
+    }
+  });
+    // 观察 document.documentElement 的 class 变化
+  themeObserver.observe(document.documentElement, { 
+    attributes: true, 
+    attributeFilter: ['class'] 
+  });
+
+  // 从系统获取可用串口列表
+  try {
+    await appStore.refreshSerialPorts();
+    if (appStore.serialPorts.length > 0) {
+      addLog('info', `检测到可用串口: ${appStore.serialPorts.join(', ')}`);
+    } else {
+      addLog('warning', '未检测到可用串口');
+    }
+  } catch (error) {
+    console.error('获取串口列表失败:', error);
+    addLog('error', '获取串口列表失败: ' + error.toString());
+  }
   
   // 模拟更新电机状态
   setInterval(() => {
@@ -632,6 +690,9 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize);
   if (chartTimer) clearInterval(chartTimer);
   if (voltageChart) voltageChart.dispose();
+  
+  // 移除主题变化观察器
+  if (themeObserver) themeObserver.disconnect();
 });
 
 const handleResize = () => {
@@ -649,9 +710,9 @@ const handleResize = () => {
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  color: #666;
-  background: #fff;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  color: var(--text-color-regular);
+  background: var(--card-bg-color);
+  box-shadow: var(--box-shadow);
   border-radius: 4px;
   margin-bottom: 20px;
   transition: all 0.3s;
@@ -684,12 +745,110 @@ const handleResize = () => {
 
 .card-panel-text {
   line-height: 18px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-color-secondary);
   font-size: 16px;
   margin-bottom: 12px;
 }
 
 .card-panel-num {
   font-size: 20px;
+  color: var(--text-color-primary);
+}
+
+/* 图标背景颜色 - 适配深色模式 */
+.blue-bg {
+  background: var(--bg-color-mode, #ecf8ff);
+}
+
+.green-bg {
+  background: var(--bg-color-mode, #f0f9eb);
+}
+
+.warning-bg {
+  background: var(--bg-color-mode, #fdf6ec);
+}
+
+/* 深色模式下的背景颜色调整 */
+:root.dark-mode .blue-bg {
+  background: rgba(64, 158, 255, 0.1);
+}
+
+:root.dark-mode .green-bg {
+  background: rgba(103, 194, 58, 0.1);
+}
+
+:root.dark-mode .warning-bg {
+  background: rgba(230, 162, 60, 0.1);
+}
+
+/* 添加样式到端口卡片 */
+.port-card {
+  background-color: var(--card-bg-color);
+  color: var(--text-color-primary);
+  margin-bottom: 20px;
+}
+
+.port-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text-color-primary);
+}
+
+.port-control {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+
+/* 主题化卡片 */
+.themed-card {
+  background-color: var(--card-bg-color) !important;
+  color: var(--text-color-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.themed-card :deep(.el-card__header) {
+  background-color: var(--bg-color-mute);
+  color: var(--text-color-primary);
+  border-color: var(--border-color);
+}
+
+/* 主题化表格 */
+.themed-table :deep(.el-table__header-wrapper),
+.themed-table :deep(.el-table__body-wrapper) {
+  color: var(--text-color-primary);
+}
+
+.themed-table :deep(.el-table) {
+  --el-table-border-color: var(--border-color);
+  --el-table-header-bg-color: var(--bg-color-mute);
+  --el-table-tr-bg-color: var(--card-bg-color);
+  --el-table-row-hover-bg-color: var(--bg-color-soft);
+}
+
+/* 控制项的样式 */
+.control-item {
+  margin-bottom: 20px;
+}
+
+.control-item .label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-color-regular);
+}
+
+/* 按钮组样式 */
+.button-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .button-group {
+    flex-direction: column;
+  }
 }
 </style>

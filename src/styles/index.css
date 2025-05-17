@@ -6,6 +6,8 @@ html, body {
   font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-color);
+  color: var(--text-color-primary);
 }
 
 #app {
@@ -101,9 +103,9 @@ html, body {
   font-size: 12px;
   position: relative;
   overflow: hidden;
-  color: #666;
-  background: #fff;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  color: var(--text-color-regular);
+  background: var(--card-bg-color);
+  box-shadow: var(--box-shadow);
   border-radius: 4px;
   transition: all 0.3s;
 }
@@ -142,4 +144,9 @@ html, body {
 
 .card-panel-description .card-panel-num {
   font-size: 20px;
+}
+
+/* 深色模式下SVG颜色调整 */
+html.dark-mode svg {
+  filter: brightness(0.8);
 }

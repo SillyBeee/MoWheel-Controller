@@ -187,6 +187,10 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Folder } from '@element-plus/icons-vue';
+import { useAppStore } from '../store';
+
+// 应用状态
+const appStore = useAppStore();
 
 // 活动标签页
 const activeTab = ref('communication');
@@ -218,8 +222,8 @@ const predefineColors = ref([
 
 // UI 设置
 const uiSettings = ref({
-  theme: 'light',
-  primaryColor: '#409EFF',
+  theme: appStore.theme.mode,
+  primaryColor: appStore.theme.primaryColor,
   language: 'zh-CN',
   fontSize: 14,
   refreshRate: '500'
@@ -234,23 +238,12 @@ const sysSettings = ref({
 // 设置主题
 const setTheme = (theme) => {
   uiSettings.value.theme = theme;
-  applyTheme(theme);
-};
-
-// 应用主题
-const applyTheme = (theme) => {
-  document.documentElement.setAttribute('data-theme', theme);
-  if (theme === 'system') {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    document.documentElement.classList.toggle('dark', prefersDark);
-  } else {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-  }
+  appStore.setTheme(theme);
 };
 
 // 更新主题色
 const updateThemeColor = (color) => {
-  document.documentElement.style.setProperty('--el-color-primary', color);
+  appStore.setPrimaryColor(color);
 };
 
 // 运行时间
@@ -276,6 +269,13 @@ const updateRuntime = () => {
 
 // 保存设置
 const saveSettings = () => {
+  // 保存主题设置
+  appStore.setTheme(uiSettings.value.theme);
+  appStore.setPrimaryColor(uiSettings.value.primaryColor);
+  
+  // 保存其他设置
+  // 这里可以添加其他设置的保存逻辑
+  
   ElMessage.success('设置已保存');
 };
 
@@ -311,10 +311,9 @@ const resetSettings = () => {
           autoSaveParams: false,
           exportPath: 'C:/Users/Documents/MoWheel'
         };
-        
-        // 应用默认主题
-        applyTheme('light');
-        updateThemeColor('#409EFF');
+          // 应用默认主题
+        appStore.setTheme('light');
+        appStore.setPrimaryColor('#409EFF');
         
         ElMessage.success('已恢复默认设置');
       }
@@ -332,14 +331,10 @@ const checkUpdate = () => {
 onMounted(() => {
   runtimeTimer = setInterval(updateRuntime, 1000);
   
-  // 初始化主题
-  applyTheme(uiSettings.value.theme);
-  updateThemeColor(uiSettings.value.primaryColor);
-  
   // 监听系统主题变化
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
     if (uiSettings.value.theme === 'system') {
-      document.documentElement.classList.toggle('dark', e.matches);
+      document.documentElement.classList.toggle('dark-mode', e.matches);
     }
   });
 });
