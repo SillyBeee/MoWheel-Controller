@@ -1,0 +1,8 @@
+project(PCAN_Host)
+cmake_minimum_required(VERSION 3.10)
+set(CMAKE_CXX_STANDARD 17)
+set(PCAN_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
+link_directories(${PCAN_LIB_DIR})
+add_executable(PCAN_Host main.cpp)
+target_link_libraries(PCAN_Host ${PCAN_LIB_DIR}/PCANBasic.lib)
