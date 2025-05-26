@@ -59,8 +59,8 @@ MoWheel Controller 是一款基于 USB-CAN 的电机控制上位机软件，旨�
 
 1. 克隆仓库
    ```powershell
-   git clone https://github.com/yourusername/mowheel-controller.git
-   cd mowheel-controller
+   git clone https:/SillyBeee/MoWheel-Controller.git
+   cd MoWheel-Controller
    ```
 
 2. 安装前端依赖
@@ -142,4 +142,4 @@ MoWheel Controller 是一款基于 USB-CAN 的电机控制上位机软件，旨�
 
 项目维护者 - [@SillyBeee](https://github.com/SillyBeee)
 
-项目链接: [https://github.com/SillyBeee/mowheel-controller](https://github.com/yourusername/mowheel-controller)
+项目链接: [https://github.com/SillyBeee/MoWheel-Controller](https://github.com/yourusername/MoWheel-Controller)
