@@ -142,4 +142,4 @@ MoWheel Controller 是一款基于 USB-CAN 的电机控制上位机软件，旨�
 
 项目维护者 - [@SillyBeee](https://github.com/SillyBeee)
 
-项目链接: [https://github.com/SillyBeee/MoWheel-Controller](https://github.com/yourusername/MoWheel-Controller)
+项目链接: [https://github.com/SillyBeee/MoWheel-Controller](https://github.com/SillyBeee/MoWheel-Controller)

@@ -1,16 +1,23 @@
 #include <windows.h>
 #include "PCANBasic.h"
 #include <iostream>
+#include "PCAN.hpp"
+
+
 int main(int argc, char* argv[])
 {
-	
-	TPCANStatus stsResult;
-	TPCANMsg msg;
-	TPCANTimestamp ts;
-	int i = 0;
-
-	// Initialization of the CAN controller
-	stsResult = CAN_Initialize(PCAN_USBBUS1, PCAN_BAUD_500K, 0, 0, 0);
-	std::cout << "CAN_Initialize: " << stsResult << std::endl;
-	
+	auto devices = GetAttachedDevices();
+	std::cout << "number of devices: " << devices.size() << std::endl;
+	PCANDeviceInfo target_pcan;
+	for (auto device : devices){
+		PrintPCANDeviceInfo(device);
+		target_pcan = device;
+	}
+	PCAN pcan(target_pcan);
+	pcan.Initialize(PCAN_BAUD_1M);
+	BYTE data[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFC};
+	while(true){
+		pcan.PcanMessageSend(0x01, data, 8 , false);
+		Sleep(1);
+	}
 }
