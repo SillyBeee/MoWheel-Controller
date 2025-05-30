@@ -19,3 +19,8 @@ Motor::~Motor()
 {
 
 }
+
+void Motor::Bind_CAN(PCAN* hcan)
+{
+    this->hcan = hcan;
+}

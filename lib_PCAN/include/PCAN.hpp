@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
-
+#include <mmsystem.h>
 struct PCANDeviceInfo {
     TPCANHandle channel_handle;        // PCAN 通道句柄
     TPCANDevice device_type;           // 设备类型 (如 PCAN_USB, PCAN_PCI 等)
@@ -15,7 +15,11 @@ struct PCANDeviceInfo {
     DWORD channel_condition;           // 通道状态
 };
 
-
+struct CANMessageData {
+    DWORD id;
+    BYTE data[64];  
+    BYTE length;
+};
 
 
 
@@ -27,17 +31,28 @@ public:
 
     TPCANStatus Initialize(TPCANBaudrate baudrate);
 
+    TPCANStatus InitializeFD(TPCANBitrateFD baudrate);
+
     TPCANStatus Uninitialize();
 
-    TPCANStatus PcanMessageSend(DWORD id, BYTE* data, BYTE length, bool extended = false);
+    TPCANStatus SendMessages(DWORD id, BYTE* data, BYTE length, bool extended = false);
 
-    TPCANStatus PcanMessageReceive(TPCANMsg* message, TPCANTimestamp* timestamp);
+    TPCANStatus ReadMessages(CANMessageData* message);
 
     TPCANStatus GetChannelStatus();
+    
     ~PCAN();
 
-    bool is_FD = false;
     PCANDeviceInfo  status;
+private:
+    TPCANStatus SendMessage(DWORD id, BYTE* data, BYTE length, bool extended);
+    TPCANStatus SendMessageFD(DWORD id, BYTE* data, BYTE length, bool extended);
+
+    TPCANStatus ReadMessage(CANMessageData* message);
+    TPCANStatus ReadMessageFD(CANMessageData* message);
+
+    bool is_FD = false;
+
 };
 
 
@@ -54,9 +69,7 @@ inline void PrintPCANDeviceInfo(const PCANDeviceInfo& dev) {
 }
 
 
-    // 检测并返回所有连接的 PCAN 设备
-    std::vector<PCANDeviceInfo> GetAttachedDevices();
-    
+
     // 获取错误信息文本
 inline std::string GetErrorText(TPCANStatus error) {
     char buffer[256];
@@ -67,6 +80,7 @@ inline std::string GetErrorText(TPCANStatus error) {
 }
 
 
+// 检测并返回所有连接的 PCAN 设备
 inline std::vector<PCANDeviceInfo> GetAttachedDevices() {
     std::vector<PCANDeviceInfo> devices;
     DWORD deviceCount = 0;
@@ -114,4 +128,31 @@ inline std::vector<PCANDeviceInfo> GetAttachedDevices() {
 
     delete[] channelInfos;
     return devices;
+}
+
+inline void GetFormattedError(TPCANStatus error, LPSTR buffer)
+{
+    // Gets the text using the GetErrorText API function. If the function success, the translated error is returned. 
+    // If it fails, a text describing the current error is returned.
+    if (CAN_GetErrorText(error, 0x09, buffer) != PCAN_ERROR_OK)
+        sprintf_s(buffer, MAX_PATH, "An error occurred. Error-code's text (%Xh) couldn't be retrieved", error);
+}
+inline void ShowStatus(TPCANStatus status)
+{
+    std::cout << "=========================================================================================\n";
+    char buffer[MAX_PATH];
+    GetFormattedError(status, buffer);
+    std::cout << buffer << "\n";
+    std::cout << "=========================================================================================\n";
+}
+
+inline void PreciseSleep(DWORD milliseconds) {
+    // 提高系统定时器精度
+    timeBeginPeriod(1);
+    
+    // 使用Sleep
+    Sleep(milliseconds);
+    
+    // 恢复系统定时器精度
+    timeEndPeriod(1);
 }

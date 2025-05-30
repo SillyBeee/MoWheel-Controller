@@ -63,13 +63,14 @@ public:
     virtual void Set_Pid_Type(Pid_Type pid_type);
 
     virtual ~Motor() = 0;
+    void Bind_CAN(PCAN* hcan);
+    virtual bool Handle_CAN_Message(const CANMessageData& message) = 0;
 
 
-
-
+    
 private:
     Pid_Type pid_type;
-
+    PCAN* hcan = nullptr;
 
 
 

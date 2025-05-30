@@ -95,7 +95,7 @@ void DM4310::MIT_Ctl_Msg_Send(const float pos , const float vel , const float kp
     tx_data[5] = (kd_tmp >> 4);
     tx_data[6] = ((kd_tmp&0xF)<<4)|(tor_tmp>>8);
     tx_data[7] = tor_tmp;
-    this->hcan->PcanMessageSend(this->can_id, tx_data, 8, false);
+    this->hcan->SendMessages(this->can_id, tx_data, 8, false);
 }
 
 void DM4310::Pos_Speed_Msg_Send(float pos, float vel) const
@@ -116,7 +116,7 @@ void DM4310::Pos_Speed_Msg_Send(float pos, float vel) const
     tx_data[5] = *(vbuf+1);
     tx_data[6] = *(vbuf+2);
     tx_data[7] = *(vbuf+3);
-    this->hcan->PcanMessageSend(this->can_id + 0x100, tx_data, 8, false);
+    this->hcan->SendMessages(this->can_id + 0x100, tx_data, 8, false);
 
 }
 
@@ -134,7 +134,7 @@ void DM4310::Speed_Msg_Send(float vel) const
     tx_data[1] = *(vbuf+1);
     tx_data[2] = *(vbuf+2);
     tx_data[3] = *(vbuf+3);
-    this->hcan->PcanMessageSend(this->can_id + 0x200, tx_data, 4, false);
+    this->hcan->SendMessages(this->can_id + 0x200, tx_data, 4, false);
 
 
 }
@@ -183,7 +183,7 @@ void DM4310::Enable() const
     tx_data[5] = 0xFF;
     tx_data[6] = 0xFF;
     tx_data[7] = 0xFC;
-    this->hcan->PcanMessageSend(pcan_id, tx_data, 8, false);
+    this->hcan->SendMessages(pcan_id, tx_data, 8, false);
 
 }
 
@@ -215,7 +215,7 @@ void DM4310::Disable() const
     tx_data[5] = 0xFF;
     tx_data[6] = 0xFF;
     tx_data[7] = 0xFD;
-    this->hcan->PcanMessageSend(pcan_id, tx_data, 8, false);
+    this->hcan->SendMessages(pcan_id, tx_data, 8, false);
 }
 
 void DM4310::Reset_Error() const
@@ -246,7 +246,7 @@ void DM4310::Reset_Error() const
     tx_data[5] = 0xFF;
     tx_data[6] = 0xFF;
     tx_data[7] = 0xFB;
-    this->hcan->PcanMessageSend(pcan_id, tx_data, 8, false);
+    this->hcan->SendMessages(pcan_id, tx_data, 8, false);
 }
 
 
@@ -296,17 +296,17 @@ void DM4310::Set_CTL_Mode(Motor_DM_Mode mode)
     this->mode = mode;
 }
 
-void DM4310::Bind_CAN(PCAN* hcan)
-{
-    this->hcan = hcan;
-}
+// void DM4310::Bind_CAN(PCAN* hcan)
+// {
+//     this->hcan = hcan;
+// }
 
 void DM4310::Set_Pid_Type(const Pid_Type pid_type)
 {
     this->pid_type = pid_type;
     if (this->pid_type == POSITION_LOOP)
     {
-        this->pid_angle.Set_Parameters(0,0,0,0.001);
+        this->pid_angle.Set_Parameters(0.0,0.0,0,0.001);
         this->pid_speed.Set_Parameters(0,0,0,0.001);
     }
     else if (this->pid_type == SPEED_LOOP)
@@ -327,3 +327,22 @@ uint8_t DM4310::Get_Master_ID() const
 }
 
 
+bool DM4310::Handle_CAN_Message(const CANMessageData& message)
+{
+    if ((this->mode == MIT_MODE || this->mode == MIT_TORQUE_MODE) && message.id == this->can_id )
+    {   
+        Deserialize_Status(message.data);
+        return true;
+    }
+    else if ( this->mode == POSITION_AND_SPEED_MODE && message.id == this->can_id + 0x100  )
+    {
+        Deserialize_Status(message.data);
+        return true;
+    }
+    else if (this->mode == SPEED_MODE &&  message.id == this->can_id + 0x200  )
+    {
+        Deserialize_Status(message.data);
+        return true;
+    }
+    return false;
+}

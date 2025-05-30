@@ -2,7 +2,7 @@
 #define MOTOR_DM_H
 
 #include "motor.h"
-
+#include "PCAN.hpp"
 #define P_MAX (3.141593)
 #define P_MIN (-3.141593)
 #define V_MAX (30)
@@ -15,7 +15,7 @@
 #define T_MIN (-10)
 
 
-class DM4310 final : private Motor
+class DM4310 final : public Motor
 {
 public:
     explicit DM4310( PCAN* hcan  ,Motor_DM_Mode mode = NONE_MODE, uint8_t can_id = 0, uint8_t master_id = 0 , Pid_Type pid_type = NONE_PID);
@@ -31,7 +31,8 @@ public:
     void Pos_Speed_Msg_Send(float pos , float vel) const;
     void Speed_Msg_Send(float vel) const;
 
-    void Bind_CAN(PCAN* hcan);
+    // void Bind_CAN(PCAN* hcan);
+    bool Handle_CAN_Message(const CANMessageData& message) override;
     uint8_t Get_Can_ID() const;
     uint8_t Get_Master_ID() const;
     void Set_CTL_Mode(Motor_DM_Mode mode);
@@ -57,7 +58,9 @@ private:
 
 };
 
- inline float uint_to_float(const int x_int , const float x_min , const float x_max , const int bits)
+
+
+inline float uint_to_float(const int x_int , const float x_min , const float x_max , const int bits)
 {
     /// converts unsigned int to float, given range and number of bits ///
     const float span = x_max - x_min;
@@ -71,6 +74,5 @@ inline int float_to_uint(const float x, const float x_min, const float x_max, co
     const float offset = x_min;
     return static_cast<int>((x - offset) * static_cast<float>((1 << bits) - 1) / span);
     }
-
 
 #endif //MOTOR_DM_H
